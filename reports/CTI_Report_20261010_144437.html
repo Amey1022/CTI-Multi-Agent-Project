@@ -1,0 +1,87 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'>
+<title>Cyber Threat Intelligence Report</title>
+<style>
+body{font-family:Segoe UI,Helvetica,Arial,sans-serif;max-width:900px;
+margin:2rem auto;padding:0 1rem;color:#1f2933;line-height:1.5}
+h1{border-bottom:3px solid #1f4e79;padding-bottom:.3rem;color:#1f4e79}
+h2{color:#1f4e79;margin-top:2rem;border-bottom:1px solid #d0d7de}
+h3{margin-bottom:.2rem}
+table{border-collapse:collapse;width:100%;margin:.5rem 0}
+th,td{border:1px solid #d0d7de;padding:.4rem .6rem;text-align:left;
+vertical-align:top}
+th{background:#eef3f8}
+pre{background:#f6f8fa;padding:1rem;overflow-x:auto;font-size:.85rem}
+.note{color:#6b7280;font-style:italic}
+</style></head><body>
+<h1>Cyber Threat Intelligence Report</h1>
+<ul><li><strong>Generated:</strong> 2026-10-10 14:44</li><li><strong>Subject:</strong> Analyze the ransomware incident in the sample report.</li><li><strong>Overall risk:</strong> High (8.5/10), likelihood Possible, P2 - High</li></ul>
+<h2>1. Executive Summary</h2>
+<p>Threat type: Ransomware. Malware: Ransomware (generic). Attack summary: The attacker sent a phishing email with a malicious attachment to finance staff. Opening the attachment executed PowerShell, which downloaded payload files from 203.0.113.45 (evil-updates.example.com). The actor used stolen credentials, dumped LSASS memory, disabled Windows Defender, deleted shadow copies, and then encrypted files across the domain, halting billing for four days. MITRE techniques: T1566.001 Phishing: Spearphishing Attachment, T1059.001 PowerShell, T1078 Valid Accounts, T1562.001 Impair Defenses: Disable or Modify Tools, T1003.001 OS Credential Dumping: LSASS Memory, T1105 Ingress Tool Transfer, T1486 Data Encrypted for Impact, T1490 Inhibit System Recovery. Risk: High (8.5/10), likelihood Possible, priority P2 - High. Business impact: Operational disruption (billing halted for four days); Financial loss (average $3.7 M per ransomware incident). Response urgency: Act within 24 hours. Top immediate actions: Quarantine the compromised file servers and domain hosts from the network to stop further ransomware spread - Containment prevents encryption from reaching additional systems (T1486, T1490); Disable compromised user accounts and force password resets with MFA for all privileged accounts - Stops the attacker from using stolen credentials (Valid Accounts) (T1078); Terminate malicious PowerShell processes and delete the payload files downloaded from 203.0.113.45 (evil‑updates.example.com) - Eradicates the execution vector and removes the tool transfer component (T1059.001, T1105).</p>
+<h2>2. Threat Overview</h2>
+<ul><li><strong>Threat type:</strong> Ransomware</li><li><strong>Malware:</strong> Ransomware (generic)</li></ul>
+<h3>Attack summary</h3>
+<p>The attacker sent a phishing email with a malicious attachment to finance staff. Opening the attachment executed PowerShell, which downloaded payload files from 203.0.113.45 (evil-updates.example.com). The actor used stolen credentials, dumped LSASS memory, disabled Windows Defender, deleted shadow copies, and then encrypted files across the domain, halting billing for four days.</p>
+<h3>Indicators of compromise</h3>
+<ul><li>203.0.113.45</li><li>evil-updates.example.com</li></ul>
+<h3>Affected systems</h3>
+<ul><li>File servers</li><li>Domain hosts</li></ul>
+<h2>3. MITRE ATT&amp;CK Mapping</h2>
+<p>Attack flow: Initial Access -&gt; Execution -&gt; Defense Evasion -&gt; Credential Access -&gt; Command and Control -&gt; Impact</p>
+<table><tr><th>ID</th><th>Technique</th><th>Tactic</th><th>Confidence</th></tr><tr><td>T1566.001</td><td>Phishing: Spearphishing Attachment</td><td>Initial Access</td><td>0.95</td></tr><tr><td>T1059.001</td><td>PowerShell</td><td>Execution</td><td>0.95</td></tr><tr><td>T1078</td><td>Valid Accounts</td><td>Defense Evasion</td><td>0.95</td></tr><tr><td>T1562.001</td><td>Impair Defenses: Disable or Modify Tools</td><td>Defense Evasion</td><td>0.95</td></tr><tr><td>T1003.001</td><td>OS Credential Dumping: LSASS Memory</td><td>Credential Access</td><td>0.95</td></tr><tr><td>T1105</td><td>Ingress Tool Transfer</td><td>Command and Control</td><td>0.95</td></tr><tr><td>T1486</td><td>Data Encrypted for Impact</td><td>Impact</td><td>0.95</td></tr><tr><td>T1490</td><td>Inhibit System Recovery</td><td>Impact</td><td>0.95</td></tr></table>
+<h2>4. Risk Assessment</h2>
+<ul><li><strong>Severity:</strong> High (8.5/10)</li><li><strong>Likelihood:</strong> Possible</li><li><strong>Priority:</strong> P2 - High</li></ul>
+<h3>Business impact</h3>
+<ul><li>Operational disruption (billing halted for four days)</li><li>Financial loss (average $3.7 M per ransomware incident)</li></ul>
+<h3>Affected assets</h3>
+<ul><li>File servers</li><li>Domain hosts</li></ul>
+<h3>Justification</h3>
+<p>The attack used multiple ATT&amp;CK techniques to gain access, evade defenses, and encrypt data, stopping billing for four days and deleting recovery points, which shows high operational impact. Industry data cites an average $3.7 M financial loss per ransomware event, reinforcing a strong business impact. While the incident is severe, it does not affect the entire organization network, so the severity is set at 8.5. CISA reports a 10% annual chance of ransomware, placing the likelihood at Possible.</p>
+<h2>5. Mitigation Plan</h2>
+<ul><li><strong>Response urgency:</strong> Act within 24 hours.</li></ul>
+<h3>Immediate actions</h3>
+<ul><li>Quarantine the compromised file servers and domain hosts from the network to stop further ransomware spread - Containment prevents encryption from reaching additional systems (T1486, T1490)</li><li>Disable compromised user accounts and force password resets with MFA for all privileged accounts - Stops the attacker from using stolen credentials (Valid Accounts) (T1078)</li><li>Terminate malicious PowerShell processes and delete the payload files downloaded from 203.0.113.45 (evil‑updates.example.com) - Eradicates the execution vector and removes the tool transfer component (T1059.001, T1105)</li><li>Re‑enable Windows Defender, verify its configuration, and audit for tampering events - Restores endpoint protection that was disabled by the attacker (T1562.001)</li><li>Detect and stop any LSASS memory dumping tools; ensure no further credential dumping occurs - Prevents additional credential theft (OS Credential Dumping) (T1003.001)</li><li>Recreate system restore points after cleaning and, if possible, restore deleted shadow copies from offline backups - Mitigates the impact of Inhibit System Recovery technique (T1490)</li></ul>
+<h3>Prevention</h3>
+<ul><li>Deploy multi‑factor authentication for all user and privileged accounts - Reduces risk of credential reuse (Valid Accounts) (T1078)</li><li>Enforce PowerShell constrained language mode and enable Script Block Logging (Event ID 4104) - Limits malicious PowerShell execution and provides forensic data (T1059.001)</li><li>Implement email security gateway that scans attachments and conduct regular user training on phishing awareness - Blocks spearphishing attachment attempts (Phishing) (T1566.001)</li><li>Configure network intrusion prevention to block outbound traffic to known malicious IPs such as 203.0.113.45 - Stops ingress tool transfer from the attacker’s C2 server (T1105)</li><li>Restrict file and registry permissions to prevent disabling or modifying Windows Defender - Prevents Impair Defenses technique (T1562.001)</li><li>Maintain immutable, offline backups and regularly test restore procedures - Ensures recovery capability despite shadow‑copy deletion (Data Encrypted for Impact, Inhibit Recovery) (T1486, T1490)</li></ul>
+<h3>Detection</h3>
+<ul><li>Enable PowerShell Script Block Logging and alert on encoded commands or download‑cradle patterns - Detects malicious PowerShell activity (T1059.001) (T1059.001)</li><li>Monitor for anomalous logins (geography, time, dormant accounts) and privileged account usage - Detects abuse of valid accounts (T1078) (T1078)</li><li>Deploy Sysmon to generate alerts when non‑system processes open lsass.exe or create MiniDump files - Detects LSASS memory dumping (T1003.001) (T1003.001)</li><li>Alert on Windows Defender service stops or configuration changes via security‑tool tamper events - Detects impairment of defenses (T1562.001) (T1562.001)</li><li>Watch for mass file modifications, new encrypted extensions, and ransom note creation across file shares - Detects ransomware encryption activity (T1486) (T1486)</li><li>Monitor execution of vssadmin, wmic, and bcdedit commands that delete shadow copies - Detects Inhibit System Recovery attempts (T1490) (T1490)</li></ul>
+<h3>Recovery</h3>
+<ul><li>Restore encrypted data from verified, offline backups after confirming the environment is clean - Reinstates business operations without paying ransom</li><li>Re‑image compromised systems from known good baselines and apply latest patches - Ensures no residual malicious artifacts remain</li><li>Conduct a thorough forensic investigation to identify any persistence mechanisms or lateral movement paths - Improves future detection and response</li><li>Update incident response playbooks with lessons learned from this attack - Strengthens organizational readiness</li><li>Notify affected stakeholders, regulatory bodies, and law enforcement as required - Meets compliance and facilitates coordinated response</li></ul>
+<h3>ATT&amp;CK mitigation reference</h3>
+<table><tr><th>Technique</th><th>ATT&amp;CK mitigations</th><th>Detection guidance</th></tr><tr><td>T1566.001 Phishing: Spearphishing Attachment</td><td>M1049 Antivirus/Antimalware, M1031 Network Intrusion Prevention, M1021 Restrict Web-Based Content, M1054 Software Configuration, M1017 User Training</td><td>Alert on emails carrying macro-enabled or executable attachments and on Office applications spawning script interpreters.</td></tr><tr><td>T1059.001 PowerShell</td><td>M1049 Antivirus/Antimalware, M1045 Code Signing, M1042 Disable or Remove Feature or Program, M1038 Execution Prevention, M1026 Privileged Account Management, M1021 Restrict Web-Based Content</td><td>Enable PowerShell Script Block Logging (Event ID 4104) and alert on encoded commands or download cradles.</td></tr><tr><td>T1078 Valid Accounts</td><td>M1032 Multi-factor Authentication, M1027 Password Policies, M1026 Privileged Account Management, M1018 User Account Management, M1017 User Training</td><td>Alert on logins from unusual locations or times and on use of dormant or privileged accounts.</td></tr><tr><td>T1562.001 Impair Defenses: Disable or Modify Tools</td><td>M1022 Restrict File and Directory Permissions, M1024 Restrict Registry Permissions, M1018 User Account Management, M1038 Execution Prevention, M1047 Audit</td><td>Alert on security-tool service stops, Defender configuration changes and tamper events.</td></tr><tr><td>T1003.001 OS Credential Dumping: LSASS Memory</td><td>M1040 Behavior Prevention on Endpoint, M1043 Credential Access Protection, M1025 Privileged Process Integrity, M1026 Privileged Account Management</td><td>Alert on non-system processes opening lsass.exe (Sysmon Event ID 10) and on comsvcs.dll MiniDump usage.</td></tr><tr><td>T1105 Ingress Tool Transfer</td><td>M1031 Network Intrusion Prevention</td><td>Monitor file downloads by certutil, bitsadmin, curl and PowerShell, and file creation from unusual external sources.</td></tr><tr><td>T1486 Data Encrypted for Impact</td><td>M1053 Data Backup, M1040 Behavior Prevention on Endpoint</td><td>Alert on mass file modification or renaming, new file extensions and ransom notes; deploy canary files.</td></tr><tr><td>T1490 Inhibit System Recovery</td><td>M1053 Data Backup, M1028 Operating System Configuration, M1038 Execution Prevention, M1018 User Account Management</td><td>Alert on vssadmin, wmic and bcdedit commands that delete shadow copies or disable recovery.</td></tr></table>
+<h2>6. Evidence and Sources</h2>
+<h3>Cited by the agents</h3>
+<ul><li>sample_threat_report.pdf, page 1 - billing halted for four days; file servers and domain encrypted; shadow copies deleted</li><li>cisa-vulnerability-review-fy-2024-2025.pdf, page 3 - average financial loss $3.7M per ransomware incident; 10% chance of ransomware per year</li><li>260818.pdf, page 18 - Deletion of shadow copies and encryption of files with AES‑256</li></ul>
+<h2>7. Limitations and Assumptions</h2>
+<ul><li>The average $3.7 M loss applies to this organization despite lack of specific financial data</li><li>Severity adjustment from baseline 10.0 to 8.5 reflects that impact, while severe, is limited to specific systems rather than the entire enterprise</li><li>Network intrusion prevention can be configured to block the specific IP 203.0.113.45</li><li>Immutable offline backups are available and have been tested</li><li>Multi‑factor authentication is not already enforced for all accounts</li><li>PowerShell constrained language mode is supported in the environment</li><li>Email security gateway with attachment scanning can be deployed promptly</li><li>This report was generated automatically. Findings should be reviewed by a security analyst before action is taken.</li></ul>
+<h2>Appendix A: Analysis Plan</h2>
+<pre>THREAT TYPE:
+Ransomware
+
+INFORMATION NEEDED:
+- Detailed description of the incident (timeline, affected systems, ransom demand, and response actions)
+- Malware characteristics (name, version, file hashes, execution method, persistence mechanisms)
+- Indicators of compromise (IP addresses, domains, file names, registry keys, network traffic patterns)
+
+AGENTS TO ACTIVATE:
+1. Threat Analyzer — to dissect the incident, identify malware behavior, attack vectors, and relevant indicators
+2. MITRE Mapper — to map the identified attacker behavior to MITRE ATT&amp;CK techniques, tactics, and procedures
+
+RETRIEVAL PLAN:
+
+STEP 1:
+Agent: Threat Analyzer  
+Retrieve: Full incident narrative, malware artifacts (hashes, file names, execution details), and any documented indicators of compromise  
+Search query: “ransomware incident report details, malware hash, execution method, indicators of compromise”  
+Purpose: Provide the foundational analysis of the ransomware event, including how it entered, spread, and what it targeted
+
+STEP 2:
+Agent: MITRE Mapper  
+Retrieve: MITRE ATT&amp;CK technique mapping for the behaviors identified by Threat Analyzer (e.g., initial access, execution, persistence, exfiltration)  
+Search query: “ATT&amp;CK mapping for ransomware behaviors, initial access, persistence, exfiltration techniques”  
+Purpose: Translate the incident’s observed behaviors into standardized ATT&amp;CK tactics and techniques for contextual understanding
+
+DEPENDENCIES:
+- MITRE Mapper depends on the output of Threat Analyzer (the identified behaviors and indicators) to accurately map to ATT&amp;CK techniques.</pre>
+<h2>Appendix B: Agent Execution Status</h2>
+<table><tr><th>Agent</th><th>Status</th></tr><tr><td>MITRE Mapper</td><td>success</td></tr><tr><td>Risk Assessment</td><td>success</td></tr><tr><td>Mitigation</td><td>success</td></tr></table>
+</body></html>
