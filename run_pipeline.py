@@ -1,121 +1,90 @@
 """
-Temporary manual runner for the CTI multi-agent pipeline.
+Command-line runner for the CTI multi-agent workflow.
 
-Chains every agent that exists today:
-    Planner -> Retriever -> Threat Analyzer -> MITRE Mapper -> Risk
-    -> Mitigation -> Report Generator
+    python run_pipeline.py path/to/report.pdf
+    python run_pipeline.py --question "How does ransomware spread?"
+    python run_pipeline.py                      (prompts for either)
 
-This is a stand-in for the LangGraph workflow (Task 4.9).
-Run from the project root:  python run_pipeline.py
+Run from the project root. Needs GROQ_API_KEY in .env.
 """
 
+import argparse
 import sys
 from pathlib import Path
 
-sys.path.append(
-    str(Path(__file__).resolve().parent / "agents"
-))
+from dotenv import load_dotenv
 
-from planner1 import planner_agent
-from retriever import retriever_agent
-from threat_analyzer import threat_analyzer_agent
-from mitre_mapper import mitre_mapper_agent
-from risk_agent import risk_agent
-from mitigation_agent import mitigation_agent
-from report_generator import report_generator_agent
+load_dotenv()
 
-
-# ==========================================
-# SAMPLE REPORT (fictitious) - lets you exercise MITRE and
-# Risk even though the knowledge base has no threat reports yet
-# ==========================================
-
-SAMPLE_REPORT = [
-    {
-        "source": "sample_threat_report.pdf",
-        "page": 1,
-        "distance": 0.0,
-        "text": (
-            "Incident summary: the attacker sent a phishing email with a "
-            "malicious attachment to finance staff. Opening the document "
-            "ran powershell.exe, which downloaded payload files from "
-            "203.0.113.45 (evil-updates.example.com). The actor used "
-            "stolen credentials, ran a credential dump of LSASS memory "
-            "and used a command to disable defender on the host. "
-            "Before encryption, the shadow copies deleted to block "
-            "recovery. Ransomware encryption then hit the file servers "
-            "and encrypted files across the domain, halting billing "
-            "for four days."
-        ),
-    }
-]
+import workflow                                                  # noqa: E402
 
 
 def main():
 
-    print("\n=========== CTI PIPELINE ===========")
-    print("1) Ask a question against the knowledge base")
-    print("2) Analyze the built-in sample ransomware report")
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("pdf", nargs="?", help="threat report PDF to analyze")
+    parser.add_argument("--question", "-q", help="ask the knowledge base instead")
+    parser.add_argument("--no-kb", action="store_true",
+                        help="do not use the knowledge base")
+    parser.add_argument("--max-chunks", type=int, default=10,
+                        help="evidence chunks taken from the PDF (default 10)")
+    parser.add_argument("--output-dir", default="reports")
 
-    choice = input("\nChoose 1 or 2: ").strip()
+    args = parser.parse_args()
 
-    # --------------------------------------
-    # Planner (always first)
-    # --------------------------------------
+    if not args.pdf and not args.question:
 
-    if choice == "2":
-        question = "Analyze the ransomware incident in the sample report."
+        path = input("Path to a PDF report (Enter to ask a question instead): ")
+        path = path.strip().strip('"').strip("'")
+
+        if path:
+            args.pdf = path
+        else:
+            args.question = input("Question: ").strip()
+
+    if args.pdf:
+
+        if not Path(args.pdf).is_file():
+            sys.exit(f"File not found: {args.pdf}")
+
+        state = workflow.analyze_pdf(
+            args.pdf, use_kb=not args.no_kb, max_chunks=args.max_chunks,
+            output_dir=args.output_dir)
+
+    elif args.question:
+
+        state = workflow.analyze_question(
+            args.question, use_kb=not args.no_kb, output_dir=args.output_dir)
+
     else:
-        question = input("\nAsk a cybersecurity question: ")
+        sys.exit("Nothing to analyze.")
 
-    plan = planner_agent(question)
-
-    print("\n========== PLANNER OUTPUT ==========\n")
-    print(plan)
-
-    # --------------------------------------
-    # Retriever
-    # --------------------------------------
-
-    if choice == "2":
-        retrieved = SAMPLE_REPORT
-    else:
-        retrieved = retriever_agent(question)
-
-    # --------------------------------------
-    # Threat Analyzer -> MITRE Mapper -> Risk -> Mitigation
-    # --------------------------------------
-
-    analysis = threat_analyzer_agent(question, retrieved)
-
-    mitre = mitre_mapper_agent(retrieved)
-
-    risk = risk_agent(question, analysis, mitre, retrieved)
-
-    mitigation = mitigation_agent(
-        question, analysis, mitre, risk, retrieved
-    )
-
-    # --------------------------------------
-    # Report Generator
-    # --------------------------------------
-
-    report = report_generator_agent(
-        question, analysis, mitre, risk, mitigation, retrieved, plan
-    )
-
-    # --------------------------------------
-    # Final summary
-    # --------------------------------------
-
+    # ---- summary ----
     print("\n==========================================")
     print("PIPELINE SUMMARY")
     print("==========================================")
-    print("MITRE techniques:", mitre.get("total_techniques", 0))
+
+    if state.get("fatal_error"):
+        print("FAILED:", state["fatal_error"])
+        sys.exit(1)
+
+    for e in state["events"]:
+        print(f"{e['status']:8} {e['label']:18} {e['seconds']:>6}s  {e['detail']}")
+
+    mitre = state.get("mitre") or {}
+    print("\nMITRE techniques:", mitre.get("total_techniques", 0))
     print("Attack flow     :", " -> ".join(mitre.get("attack_flow", [])) or "n/a")
-    print("Risk            :", risk.get("summary"))
-    print("Mitigation      :", mitigation.get("summary"))
-    print("Report files    :", ", ".join(report["files"].values()))
+    print("Risk            :", (state.get("risk") or {}).get("summary", "n/a"))
+    print("Mitigation      :", (state.get("mitigation") or {}).get("summary", "n/a"))
+
+    for kind, path in (state.get("report") or {}).get("files", {}).items():
+        print(f"Report ({kind:8}):", path)
+
+    if state["errors"]:
+        print("\nWarnings/errors:")
+        for message in state["errors"]:
+            print(" -", message)
 
 
 if __name__ == "__main__":

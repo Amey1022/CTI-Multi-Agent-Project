@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ransomware_sample",
+    "pdf": "samples/ransomware_report.pdf",
+    "expected": {
+      "threat_type_keywords": ["ransomware"],
+      "techniques": ["T1566.001", "T1059.001", "T1003.001", "T1562.001", "T1486"],
+      "iocs": ["203.0.113.45", "update-check.xyz", "bad-actor.com"],
+      "cves": ["CVE-2023-34362"]
+    }
+  }
+]

@@ -117,7 +117,7 @@ def format_actions(items):
 # ==========================================
 
 def collect_facts(threat_sections, mitre_result, risk_result,
-                  mitigation_result):
+                  mitigation_result, extracted=None):
 
     facts = []
 
@@ -129,6 +129,9 @@ def collect_facts(threat_sections, mitre_result, risk_result,
 
     if threat_sections["Attack Summary"]:
         facts.append(f"Attack summary: {threat_sections['Attack Summary']}")
+
+    if extracted and extracted.get("cves"):
+        facts.append("CVEs referenced: " + ", ".join(extracted["cves"]))
 
     if ok(mitre_result) and mitre_result.get("mappings"):
         facts.append(
@@ -214,9 +217,47 @@ def executive_summary(facts):
 #   ("table", [headers], [rows])  ("pre", text)  ("note", text)
 # ==========================================
 
+def extracted_blocks(extracted):
+
+    """Indicators found by pattern matching in the source document."""
+
+    if not extracted:
+        return []
+
+    groups = [
+        ("IP addresses", extracted.get("ips", [])),
+        ("Domains", extracted.get("domains", [])),
+        ("URLs", extracted.get("urls", [])),
+        ("Email addresses", extracted.get("emails", [])),
+        ("MD5", extracted.get("hashes", {}).get("md5", [])),
+        ("SHA-1", extracted.get("hashes", {}).get("sha1", [])),
+        ("SHA-256", extracted.get("hashes", {}).get("sha256", [])),
+        ("Files mentioned", extracted.get("files", [])),
+    ]
+
+    lines = [f"{label}: {', '.join(values)}"
+             for label, values in groups if values]
+
+    blocks = []
+
+    if lines:
+        blocks.append(("h3", "Indicators extracted from the document"))
+        blocks.append(("ul", lines))
+        blocks.append(("note",
+            "Found by pattern matching, so each one appears in the source "
+            "text. Reference sites and internal addresses are excluded."))
+
+    if extracted.get("cves"):
+        blocks.append(("h3", "CVEs referenced"))
+        blocks.append(("ul", extracted["cves"]))
+
+    return blocks
+
+
 def build_blocks(query, plan, threat_analysis, mitre_result,
                  risk_result, mitigation_result, retrieved_results,
-                 summary):
+                 summary, extracted=None, verification=None,
+                 document_info=None):
 
     sections = parse_threat_analysis(threat_analysis)
 
@@ -229,6 +270,11 @@ def build_blocks(query, plan, threat_analysis, mitre_result,
         ("Generated", datetime.now().strftime("%Y-%m-%d %H:%M")),
         ("Subject", query)
     ]
+
+    if document_info:
+        header.insert(1, ("Source document",
+            f"{document_info.get('filename')} "
+            f"({document_info.get('pages')} pages)"))
 
     if ok(risk_result):
         header.append(("Overall risk", risk_result["summary"]))
@@ -254,8 +300,15 @@ def build_blocks(query, plan, threat_analysis, mitre_result,
             blocks.append(("p", sections["Attack Summary"]))
 
         if sections["IOCs"]:
+            unverified = {v.lower() for v in
+                          (verification or {}).get("unverified", [])}
+            iocs = [
+                item + " [not found in the source document]"
+                if any(u in item.lower() for u in unverified) else item
+                for item in to_list(sections["IOCs"])
+            ]
             blocks.append(("h3", "Indicators of compromise"))
-            blocks.append(("ul", to_list(sections["IOCs"])))
+            blocks.append(("ul", iocs))
 
         if sections["Affected Systems"]:
             blocks.append(("h3", "Affected systems"))
@@ -266,6 +319,8 @@ def build_blocks(query, plan, threat_analysis, mitre_result,
 
     else:
         blocks.append(("note", NOT_AVAILABLE))
+
+    blocks.extend(extracted_blocks(extracted))
 
     # ---- 3. MITRE ----
     blocks.append(("h2", "3. MITRE ATT&CK Mapping"))
@@ -424,6 +479,16 @@ def build_blocks(query, plan, threat_analysis, mitre_result,
                 f"The {name} agent used its rule-based fallback because "
                 f"the LLM was unavailable."
             )
+
+    for warning in (document_info or {}).get("warnings", []):
+        limits.append(warning)
+
+    if verification and verification.get("unverified"):
+        limits.append(
+            "The Threat Analyzer listed indicators that were not found in "
+            "the source document and should be treated as unverified: "
+            + ", ".join(verification["unverified"]) + "."
+        )
 
     limits.append(
         "This report was generated automatically. Findings should be "
@@ -708,7 +773,9 @@ def report_generator_agent(query, threat_analysis, mitre_result=None,
                            risk_result=None, mitigation_result=None,
                            retrieved_results=None, plan=None,
                            output_dir="reports",
-                           formats=("md", "html", "pdf")):
+                           formats=("md", "html", "pdf"),
+                           extracted_iocs=None, ioc_verification=None,
+                           document_info=None):
 
     """
     Report Generator Agent.
@@ -731,7 +798,7 @@ def report_generator_agent(query, threat_analysis, mitre_result=None,
 
     facts = collect_facts(
         parse_threat_analysis(threat_analysis),
-        mitre_result, risk_result, mitigation_result
+        mitre_result, risk_result, mitigation_result, extracted_iocs
     )
 
     summary = executive_summary(facts)
@@ -741,7 +808,8 @@ def report_generator_agent(query, threat_analysis, mitre_result=None,
 
     blocks = build_blocks(
         query, plan, threat_analysis, mitre_result, risk_result,
-        mitigation_result, retrieved_results, summary
+        mitigation_result, retrieved_results, summary,
+        extracted_iocs, ioc_verification, document_info
     )
 
     markdown = render_markdown(blocks)
@@ -753,6 +821,14 @@ def report_generator_agent(query, threat_analysis, mitre_result=None,
     folder.mkdir(parents=True, exist_ok=True)
 
     stem = "CTI_Report_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    counter = 1
+
+    while any((folder / f"{stem}.{ext}").exists()
+              for ext in ("md", "html", "pdf")):
+        counter += 1
+        stem = ("CTI_Report_" + datetime.now().strftime("%Y%m%d_%H%M%S")
+                + f"_{counter}")
 
     files = {}
 
