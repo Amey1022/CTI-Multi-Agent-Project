@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq
 
 from common import format_mitre, build_context, gather_evidence
+from retry import call_with_retry
 
 
 # ==========================================
@@ -523,7 +524,7 @@ Return exactly this JSON:
 }}
 """
 
-    response = llm_client.chat.completions.create(
+    response = call_with_retry(lambda: llm_client.chat.completions.create(
 
         model=GROQ_MODEL,
 
@@ -535,7 +536,7 @@ Return exactly this JSON:
         temperature=0,
 
         response_format={"type": "json_object"}
-    )
+    ))
 
     content = response.choices[0].message.content
 

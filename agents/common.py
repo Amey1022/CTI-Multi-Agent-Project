@@ -6,7 +6,17 @@ sys.path.append(
     str(Path(__file__).resolve().parent.parent)
 )
 
-from rag import retrieve
+try:
+    from rag import retrieve
+    KB_AVAILABLE = True
+    KB_ERROR = ""
+except Exception as error:          # knowledge base not built yet
+    KB_AVAILABLE = False
+    KB_ERROR = str(error)
+
+    def retrieve(query, n_results=5):
+        """Fallback: no knowledge base, so no extra evidence."""
+        return []
 
 
 # ==========================================

@@ -4,4 +4,7 @@ sentence-transformers
 chromadb
 groq
 python-dotenv
+numpy
 reportlab
+langgraph
+streamlit

@@ -3,6 +3,7 @@ from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 import chromadb
+import hashlib
 import os
 from dotenv import load_dotenv
 from groq import Groq
@@ -17,7 +18,19 @@ data_folder = Path("Data")
 
 documents = []
 
-for pdf_path in data_folder.glob("*.pdf"):
+seen_files = {}          # file hash -> first file name
+
+for pdf_path in sorted(data_folder.glob("*.pdf")):
+
+    # skip byte-identical copies such as "report (1).pdf"
+    file_hash = hashlib.md5(pdf_path.read_bytes()).hexdigest()
+
+    if file_hash in seen_files:
+        print(f"Skipping duplicate file: {pdf_path.name} "
+              f"(same as {seen_files[file_hash]})")
+        continue
+
+    seen_files[file_hash] = pdf_path.name
 
     reader = PdfReader(pdf_path)
 
@@ -49,12 +62,20 @@ splitter = RecursiveCharacterTextSplitter(
 )
 
 chunks = []
+seen_chunks = set()      # identical text from different files is stored once
 
 for document in documents:
 
     split_texts = splitter.split_text(document["text"])
 
     for chunk_text in split_texts:
+
+        chunk_key = hashlib.md5(chunk_text.strip().lower().encode()).hexdigest()
+
+        if chunk_key in seen_chunks:
+            continue
+
+        seen_chunks.add(chunk_key)
 
         chunks.append({
             "text": chunk_text,
